@@ -23,7 +23,7 @@ gpgcheck = 1
 ```
 
 ```
-dnf install MariaDB-server MariaDB-client
+dnf install -y MariaDB-server MariaDB-client
 ```
 
 
