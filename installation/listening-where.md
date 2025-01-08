@@ -1,6 +1,6 @@
 # Where does the Server Listen 
 
-## How to check ? 
+## Step 1: Is services listening to the outside world (Ubuntu, Redhat, Rocky) ? 
 
 ```
 lsof -i | grep mariadb
@@ -12,6 +12,17 @@ netstat -tupel
 netstat -an 
 
 ```
+
+## Step 2: is firewall open on port 3306 or service mysql
+
+```
+firewall-cmd --list-all
+# services: cockpit dhcpv6-client ssh
+firewall-cmd --add-service=mysql --zone=public
+firewall-cmd --runtime-to-permanent 
+
+```
+
 
 ## How to fix (Ubuntu -> Mariadb Foundation) 
 
