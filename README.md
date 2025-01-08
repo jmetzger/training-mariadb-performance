@@ -51,9 +51,14 @@
      * [Fragen und Antworten](q-and-a.md)
   1. Projektarbeit/-optimierung 
      * [Praktisch Umsetzung in 3-Schritten](project-3-steps.md)
-  1. Dokumentation 
+  1. Dokumentation (Performance) 
      * [MySQL - Performance - PDF](http://schulung.t3isp.de/documents/pdfs/mysql/mysql-performance.pdf)
      * [Effective MySQL](https://www.amazon.com/Effective-MySQL-Optimizing-Statements-Oracle/dp/0071782796)
+  1. Dokumentation (Releases)
+     * [Identify Long-Term Support Releases](https://mariadb.com/kb/en/mariadb-server-release-dates/)  
+  1. Dokumentation (Server System Variables)
+     * [Server System Variables](https://mariadb.com/kb/en/server-system-variables/)
+    
   1. Backup/Restore
      * [Mariabackup](backup-restore/mariabackup.md)
         
