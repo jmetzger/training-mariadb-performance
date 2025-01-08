@@ -12,6 +12,7 @@
      * [3-Phasen-Datengröße](3-phases-of-data-size-and-performance-impact.md)
   1. Installation
      * [Installation (Rocky/Redhat) - 10.6](installation-rocky.md)
+     * [Open Mariadb to the outside world - port and firewall](installation/listening-where.md)
   1. Konfiguration 
      * [Slow query log](slow-query-log.md) 
   1. Administration 
