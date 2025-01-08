@@ -8,6 +8,8 @@ pager grep sequence;
 show engine innodb status; 
 select sleep(60);
 show engine innodb status;
+-- pager zuruecksetzen
+pager;
 ```
 
 ```
