@@ -11,7 +11,7 @@
      * [Query - Cache](/performance/query-cache.md)
      * [3-Phasen-Datengröße](3-phases-of-data-size-and-performance-impact.md)
   1. Installation
-     * [Installation (Debian)](installation-debian.md)
+     * [Installation (Rocky/Redhat) - 10.6](installation-rocky.md)
   1. Konfiguration 
      * [Slow query log](slow-query-log.md) 
   1. Administration 
