@@ -13,7 +13,7 @@ netstat -an
 
 ```
 
-## Step 2: is firewall open on port 3306 or service mysql
+## Step 2: is firewall open on port 3306 or service mysql (Rocky / RHEL) 
 
 ```
 firewall-cmd --list-all
