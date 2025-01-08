@@ -4,6 +4,7 @@
  * https://downloads.mariadb.org/mariadb/repositories/
 
 ```
+sudo su -
 cd /etc/yum/repos.d
 nano mariadb.repo
 ```
@@ -22,7 +23,7 @@ gpgcheck = 1
 ```
 
 ```
-sudo dnf install MariaDB-server MariaDB-client
+dnf install MariaDB-server MariaDB-client
 ```
 
 
