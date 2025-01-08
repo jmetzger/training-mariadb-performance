@@ -1,5 +1,40 @@
 # Slow Query Log
 
+## Variante 1: Langsame Queries loggen
+
+### Step 1: Config vorbereiten 
+
+```
+nano /etc/my.cnf.d/server.cnf
+```
+
+```
+# guter richtwert 
+# long_query_time=0.5
+
+# nur fürs Training um Daten zu bekommen
+long_query_time=0.000001
+```
+
+```
+systemctl restart mariadb
+```
+
+### Step 2: Während der Laufzeit global aktivieren 
+
+```
+mysql
+```
+
+```
+set global slow_query_log = 1;
+```
+
+```
+## Wichtig: Ist jetzt erst beim nächsten Connection mit einer Session für diese Session aktiv
+```
+
+
 ## Variante 1: Aktivieren (minimum) 
 
 ```
