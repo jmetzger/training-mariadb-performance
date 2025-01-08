@@ -43,7 +43,7 @@ How your data is stored
   * CSV
   * Blackhole (/dev/null)
   * Archive
-  * Partition
+  * Partition / PartitionX
   * (Federated/FederatedX)
 
 ## Comparison MyISAM vs. InnoDB  
