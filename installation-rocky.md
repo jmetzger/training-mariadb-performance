@@ -1,5 +1,4 @@
-# Installation Debian 10 
-
+# Installation Rocky 9
 ## Setup repo and install
 
  * https://downloads.mariadb.org/mariadb/repositories/
