@@ -7,7 +7,8 @@
      * [CPU oder io-Last klären](top-cpu-io-load.md)
      * [Storage Engines](storage-engines.md) 
      * [InnoDB - Struktur](/innodb/innodb-structure.md)
-     * [InnoDB - Optimierung](/innodb/innodb.md) 
+     * [InnoDB - Optimierung](/innodb/innodb.md)
+     * [InnoDB - innodb_log_file_size berechnen](innodb/calculate-innodb-logfile-size.md)
      * [Query - Cache](/performance/query-cache.md)
      * [3-Phasen-Datengröße](3-phases-of-data-size-and-performance-impact.md)
   1. Installation
