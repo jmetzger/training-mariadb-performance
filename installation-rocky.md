@@ -5,7 +5,7 @@
 
 ```
 sudo su -
-cd /etc/yum/repos.d
+cd /etc/yum.repos.d
 nano mariadb.repo
 ```
 
