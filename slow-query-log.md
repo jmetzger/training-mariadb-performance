@@ -9,6 +9,7 @@ nano /etc/my.cnf.d/server.cnf
 ```
 
 ```
+# unterhalb von [mysqld]
 # guter richtwert 
 # long_query_time=0.5
 
