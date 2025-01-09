@@ -57,9 +57,10 @@
      * [Effective MySQL](https://www.amazon.com/Effective-MySQL-Optimizing-Statements-Oracle/dp/0071782796)
   1. Dokumentation (Releases)
      * [Identify Long-Term Support Releases](https://mariadb.com/kb/en/mariadb-server-release-dates/)  
-  1. Dokumentation (Server System Variables)
+  1. Dokumentation (Server System Variables / Alter inplace)
      * [Server System Variables](https://mariadb.com/kb/en/server-system-variables/)
-    
+     * [Inplace Alter](https://mariadb.com/kb/en/innodb-online-ddl-operations-with-the-inplace-alter-algorithm/)
+      
   1. Backup/Restore
      * [Mariabackup](backup-restore/mariabackup.md)
         
