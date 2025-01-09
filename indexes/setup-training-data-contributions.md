@@ -19,7 +19,8 @@ cd mysql_example;
 ## Walkthrough (Redhat/Rocky) 
 
 ```bash 
-cd /usr/src; 
+cd /usr/src;
+dnf install -y git 
 git clone https://github.com/jmetzger/dedupe-examples.git;
 cd dedupe-examples; 
 cd mysql_example; 
