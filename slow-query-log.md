@@ -62,7 +62,7 @@ nano /etc/my.cnf.d/server.cnf
 # alle queries loggen die kein index haben
 log-queries-not-using-indexes
 # das nur für production, wenn wirklich dort getracked werden soll 
-# nur jede 2. mitloggen 
+# nur jede 20. mitloggen 
 log-slow-rate-limit=20
 # hier nimmt er alle optionen als Zusatzinformationen
 # auch neu (ab. 10.6: engine, Innodb
