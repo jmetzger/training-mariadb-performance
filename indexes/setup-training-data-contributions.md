@@ -13,7 +13,7 @@ cd mysql_example;
 # Eventually you need to enter (in mysql_example/mysql.cnf)  
 # Only necessary if you cannot connect to db by entering "mysql" 
 # password=<your_root_pw> 
-./setup.sh 
+./setup-debian.sh 
 ```
 
 ## Walkthrough (Redhat/Rocky) 
@@ -27,7 +27,7 @@ cd mysql_example;
 # Eventually you need to enter (in mysql_example/mysql.cnf)  
 # Only necessary if you cannot connect to db by entering "mysql" 
 # password=<your_root_pw> 
-./setup.sh 
+./setup-rhel.sh 
 ```
 
 
