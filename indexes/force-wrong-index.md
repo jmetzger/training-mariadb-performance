@@ -17,6 +17,10 @@ explain select * from contributions where contribution_id < 400000 and date_reci
 select * from contributions where contribution_id < 400000 and date_recieved < '2000-12-31';
 ```
 
+![image](https://github.com/user-attachments/assets/804c1be1-52f5-454d-a5cb-c38b2bace278)
+
+
+
 ```
 # Forcing the index, performance is worse
 explain select * from contributions force index (idx_contributions_date_recieved) where contribution_id < 400000 and date_recieved < '2000-12-31';
