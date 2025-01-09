@@ -26,6 +26,7 @@ mysql > quit
 cd /var/lib/mysql 
 # look for awhile wih -slow.log - suffix 
 pt-query-digest mysql-slow.log > /usr/src/report-slow.txt
+cd /usr/src 
 less report-slow.txt 
 
 ```
