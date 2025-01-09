@@ -3,7 +3,7 @@
 ## Walkthrough Rocky 9 / RHEL 9 
 
 ```
- wget https://downloads.percona.com/downloads/percona-toolkit/3.7.0/binary/redhat/9/x86_64/percona-toolkit-3.7.0-1.el9.x86_64.rpm
+wget https://downloads.percona.com/downloads/percona-toolkit/3.7.0/binary/redhat/9/x86_64/percona-toolkit-3.7.0-1.el9.x86_64.rpm
 
 dnf localinstall percona-toolkit-3.7.0-1.el9.x86_64.rpm
 ```
