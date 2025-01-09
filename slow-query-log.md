@@ -35,6 +35,47 @@ set global slow_query_log = 1;
 ## Wichtig: Ist jetzt erst beim nächsten Connection mit einer Session für diese Session aktiv
 ```
 
+### Step 3: Zusätzliche sinnvolle Einstellungen vornehmen für das slow_query_log
+
+
+#### bis Version 10.4 (inkl.)
+
+```
+# Alle Logs analysieren, die kein Index verwendet 
+#/etc/mysql/mariadb.conf.d/50-server.cnf 
+# unter [mysqld]
+
+# slow query log 
+slow-query-log
+log-queries-not-using-indexes
+log-slow-rate-limit=5
+log-slow-verbosity = 'query_plan,explain'
+```
+#### ab Version 10.6. (auf Rocky / RHEL)
+
+```
+# Empfehlung in der config
+nano /etc/my.cnf.d/server.cnf
+```
+
+```
+# alle queries loggen die kein index haben
+log-queries-not-using-indexes
+# das nur für production, wenn wirklich dort getracked werden soll 
+# nur jede 2. mitloggen 
+log-slow-rate-limit=20
+# hier nimmt er alle optionen als Zusatzinformationen
+# auch neu (ab. 10.6: engine, Innodb
+log-slow-verbosity=All
+```
+
+```
+systemctl restart mariadb
+```
+
+
+
+
 
 ## Variante 1: Aktivieren (minimum) 
 
@@ -75,19 +116,7 @@ set session log_slow_verbosity = 'query_plan,explain'
 log-slow-rate-limit=5;
 ```
 
-## Best - Practice - Phase 1 
 
-```
-# Alle Logs analysieren, die kein Index verwendet 
-#/etc/mysql/mariadb.conf.d/50-server.cnf 
-# unter [mysqld]
-
-# slow query log 
-slow-query-log
-log-queries-not-using-indexes
-log-slow-rate-limit=5
-log-slow-verbosity = 'query_plan,explain'
-```
 
 
 ## Ref: 
