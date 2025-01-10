@@ -8,23 +8,27 @@
      * [Storage Engines](#storage-engines)
      * [InnoDB - Struktur](#innodb---struktur)
      * [InnoDB - Optimierung](#innodb---optimierung)
+     * [InnoDB - innodb_log_file_size berechnen](#innodb---innodb_log_file_size-berechnen)
      * [Query - Cache](#query---cache)
      * [3-Phasen-Datengröße](#3-phasen-datengröße)
   1. Installation
-     * [Installation (Debian)](#installation-debian)
+     * [Installation (Rocky/Redhat) - 10.6](#installation-rockyredhat---106)
+     * [Open Mariadb to the outside world - port and firewall](#open-mariadb-to-the-outside-world---port-and-firewall)
   1. Konfiguration 
      * [Slow query log](#slow-query-log)
   1. Administration 
      * [Standard storage engine bestimmen](#standard-storage-engine-bestimmen)
      * [Show status](#show-status)
      * [Server System Variablen - show variables](#server-system-variablen---show-variables)
-     * [systemctl/jorunalctl - Server starten,stoppen/Logs](#systemctljorunalctl---server-starten,stoppenlogs)
+     * [systemctl/jorunalctl - Server starten,stoppen/Logs](#systemctljorunalctl---server-startenstoppenlogs)
      * [User verwalten](#user-verwalten)
+  1. Joins
+     * [Joins - Overview](#joins---overview)
   1. Performance und Optimierung von SQL-Statements 
      * [Explain verwenden](#explain-verwenden)
      * [Do not use '*' whenever possible](#do-not-use-''-whenever-possible)
      * [Indexes](#indexes)
-     * [profiling-get-time-for-execution-of.query](#profiling-get-time-for-execution-of.query)
+     * [profiling-get-time-for-execution-of.query](#profiling-get-time-for-execution-ofquery)
      * [Kein function in where verwenden](#kein-function-in-where-verwenden)
      * [Optimizer-hints (and why you should not use them)](#optimizer-hints-and-why-you-should-not-use-them)
      * [Query-Plans aka Explains](#query-plans-aka-explains)
@@ -33,6 +37,18 @@
      * [Index und Joins](#index-und-joins)
      * [Find out cardinality without index](#find-out-cardinality-without-index)
      * [Index and Functions](#index-and-functions)
+     * [index and group by](#index-and-group-by)
+     * [forcing good index](#forcing-good-index)
+     * [forcing bad index](#forcing-bad-index)
+  1. Performance - Views
+     * [Performance - Views](#performance---views)
+  1. Performance Schema
+     * [Performance Schema - slow queries](#performance-schema---slow-queries)
+  1. Performance Metrics from status
+     * [Performance Metrics from status](#performance-metrics-from-status)
+  1. Locks
+     * [How does innodb implicit locking work](#how-does-innodb-implicit-locking-work)
+     * [Exercise - identify deadlocks](#exercise---identify-deadlocks)
   1. Tools 
      * [Percona Toolkit](#percona-toolkit)
      * [pt-query-digest - analyze slow logs](#pt-query-digest---analyze-slow-logs)
@@ -50,9 +66,21 @@
      * [Fragen und Antworten](#fragen-und-antworten)
   1. Projektarbeit/-optimierung 
      * [Praktisch Umsetzung in 3-Schritten](#praktisch-umsetzung-in-3-schritten)
-  1. Dokumentation 
+  1. Dokumentation (Performance) 
      * [MySQL - Performance - PDF](http://schulung.t3isp.de/documents/pdfs/mysql/mysql-performance.pdf)
      * [Effective MySQL](https://www.amazon.com/Effective-MySQL-Optimizing-Statements-Oracle/dp/0071782796)
+     * [Analyze statt Explain](https://mariadb.com/kb/en/analyze-statement/)
+  1. Dokumentation (Releases)
+     * [Identify Long-Term Support Releases](https://mariadb.com/kb/en/mariadb-server-release-dates/)
+  1. Dokumentation (Server System Variables / Alter inplace)
+     * [Server System Variables](https://mariadb.com/kb/en/server-system-variables/)
+     * [Inplace Alter](https://mariadb.com/kb/en/innodb-online-ddl-operations-with-the-inplace-alter-algorithm/)
+  1. Dokumentation (Indexes)
+    * [Recipes for settings indexes](https://mariadb.com/kb/en/building-the-best-index-for-a-given-select/)
+  1. Dokumenation (Virtual Columns / Persistentn)
+     * [Persistent / Virtual Columns](https://mariadb.com/kb/en/generated-columns/)
+  1. Backup/Restore
+     * [Mariabackup](#mariabackup)
         
      
 
@@ -65,8 +93,6 @@
 
 
 ![MariaDB Server Architektur](/images/mysql-server-architecture.png)
-
-<div class="page-break"></div>
 
 ### CPU oder io-Last klären
 
@@ -89,54 +115,92 @@ Die Festplatte ist hier der begrenzende Faktor
 sy und wa hoch (wa = waiting, cpu wartet auf das io-subsystem (Festplatte or Storage) 
 ```
 
-<div class="page-break"></div>
-
 ### Storage Engines
 
 
-### In Detail: MyISAM - Storage Engine
+### Why ?
 
 ```
-1. table locks → Locks are done table-wide
-2. no automatic data-recovery (Aria hat das !) 
-3. you can loose more data on crashes than with e.g. InnoDB
-4. no transactions
-5. only indices are save in memory through MySQL
-6. compact saving (data is saved really dense)
-7. table scans are quick
+Let's you choose:
+How your data is stored
 ```
 
-### In Detail: InnoDB - Storage Engine
+### What ?
 
-```
-1. support hot backups (because of transactions)
-2. transactions are supported
-3. foreign keys are supported
-4. row-level locking
-5. multi-versioning
-```
+  * Performance, features and other characteristics you want
 
-### Welches sind die wichtigsten ? 
+### Where ? 
 
-```
-MyISAM/Aria
-InnoDB
-Memory
-CSV 
-Blackhole (/dev/null) 
-Archive 
-FederatedX 
-```
+  * Theoretically you can use a different engine for every table 
+  * But: For performance optimization and future, it is better to concentrate on one 
 
+### What do they do ?
 
-<div class="page-break"></div>
+  * In charge for: Responsible for storing and retrieving all data stored in MariaDB
+  * Each storage engine has its:
+    * Drawbacks and benefits
+  * Server communicates with them through the storage engine API 
+    * this interface hides differences
+    * makes them largely transparent at query layer
+    * api contains a couple of dozen low-level functions e.g. “begin a transaction”, “fetch the row that has this primary key”
+
+### Storage Engine do not ....
+
+  * Storage Engines do not parse SQL
+  * Storage Engines do not communicate with each other
+
+### They simply .....
+
+  * They simply respond to requests from the server
+
+### Which are the most important one ?
+
+  * InnoDB (currently default engine) 
+  * MyISAM/Aria
+  * Memory
+  * CSV
+  * Blackhole (/dev/null)
+  * Archive
+  * Partition / PartitionX
+  * (Federated/FederatedX)
+
+### Comparison MyISAM vs. InnoDB  
+
+#### On Detail: MyISAM - Storage Engine
+
+##### Features 
+
+  * table locks 
+  * Locks are done table-wide
+  * no automatic data-recovery
+  * you can loose more data on crashes than with e.g. InnoDB
+  * no transactions
+  * only indices are save in memory through MySQL
+  * compact saving (data is saved really dense)
+  * table scans are quick
+
+#### In Detail: InnoDB - Storage Engine
+
+##### Features
+
+  * support hot backups (because of transactions)
+  * transactions are supported
+  * foreign keys are supported
+  * row-level locking
+  * multi-versioning
+  * indexes refer to the data through primary keys
+  * indexes can quickly get huge in size
+    * if size of primary index is not small
+
+#### Difference MyISAM / Aria 
+
+  * Crash Recovery (only difference)
+
 
 ### InnoDB - Struktur
 
 
 ![InnoDB Structure](/images/InnoDB-Structure.jpg)
-
-<div class="page-break"></div>
 
 ### InnoDB - Optimierung
 
@@ -238,7 +302,101 @@ ERROR 1227 (42000): Access denied; you need (at least one of) the PROCESS privil
 
 ```
 
-<div class="page-break"></div>
+### InnoDB - innodb_log_file_size berechnen
+
+
+
+### Exercise (simple) 
+
+```
+pager grep sequence;
+show engine innodb status; 
+select sleep(60);
+show engine innodb status;
+-- pager zuruecksetzen
+pager;
+```
+
+```
+mysql> select (3838334638 - 3836410803) / 1024 / 1024 as MB_per_min;
++------------+
+| MB_per_min |
++------------+
+| 1.83471203 | 
++------------+
+```
+
+  * https://www.percona.com/blog/how-to-calculate-a-good-innodb-log-file-size/
+
+### Exercise 2: with sakila 
+
+```
+Open 2 sessions
+Session 1: mysql to measure
+Session 2: import sakila 
+```
+
+#### Step 1: In Session 1 (measure) 
+
+```
+mysql
+```
+
+```
+pager grep sequence;
+show engine innodb status;
+select sleep(120);
+show engine innodb status;
+
+```
+
+#### Step 2: In Session 2 (import sakila) 
+
+```
+cd /usr/src/sakila-db
+mysql < sakila-schema.sql; mysql < sakila-data.sql;
+```
+
+#### Step 3: In Session 1 (measure) - Calculate values 
+
+```
+-- Calculate values 
+-- second-value-from-step1 - first-value-from-step1
+-- select (second_value - first_value) / 1024 / 1024 as MB_per_2min
+
+
+pager;
+## eg. 312MB 
+select (3838334638 - 3836410803) / 1024 / 1024 as MB_per_2min;
+exit 
+```
+
+#### Step 4: Adjust config accordingly 
+
+```
+## Ubuntu / Debian
+cd /etc/mysql/mariadb.conf.d/
+nano 50-server.cnf
+```
+
+```
+## mysqld section
+[mysqld]
+## other settings
+innodb-log-file-size=312M
+```
+
+```
+systemctl restart mariadb
+mysql
+```
+
+```
+select @@innodb_log_file_size
+## oder
+show variables like '%log_file%';
+exit
+```
 
 ### Query - Cache
 
@@ -349,8 +507,6 @@ Ich mache ein Lock-file damit du weisst, dass ich gerade
 Dran arbeite.
 ```
 
-<div class="page-break"></div>
-
 ### 3-Phasen-Datengröße
 
 
@@ -393,32 +549,45 @@ Step 2: Lookup data, but a lot lookups needed
 
 
 
-<div class="page-break"></div>
-
 ## Installation
 
-### Installation (Debian)
-
+### Installation (Rocky/Redhat) - 10.6
 
 ### Setup repo and install
 
  * https://downloads.mariadb.org/mariadb/repositories/
 
 ```
-### repo 
-sudo apt-update 
-sudo apt-get install software-properties-common dirmngr
-sudo apt-key adv --fetch-keys 'https://mariadb.org/mariadb_release_signing_key.asc'
-sudo add-apt-repository 'deb [arch=amd64,arm64,ppc64el] http://mirror2.hs-esslingen.de/mariadb/repo/10.5/debian buster main'
-### now update and install 
-sudo apt update
-sudo apt install mariadb-server 
+sudo su -
+cd /etc/yum.repos.d
+nano mariadb.repo
+```
 
 ```
+## MariaDB 10.6 RedHatEnterpriseLinux repository list - created 2025-01-08 10:52 UTC
+## https://mariadb.org/download/
+[mariadb]
+name = MariaDB
+## rpm.mariadb.org is a dynamic mirror if your preferred mirror goes offline. See https://mariadb.org/mirrorbits/ for details.
+## baseurl = https://rpm.mariadb.org/10.6/rhel/$releasever/$basearch
+baseurl = https://ftp.agdsn.de/pub/mirrors/mariadb/yum/10.6/rhel/$releasever/$basearch
+## gpgkey = https://rpm.mariadb.org/RPM-GPG-KEY-MariaDB
+gpgkey = https://ftp.agdsn.de/pub/mirrors/mariadb/yum/RPM-GPG-KEY-MariaDB
+gpgcheck = 1
+```
+
+```
+dnf install -y MariaDB-server MariaDB-client
+```
+
+
 
 ### Check if running and enabled 
 
 ```
+systemctl status mariadb
+systemctl start mariadb
+systemctl enable mariadb
 systemctl status mariadb 
 ## enabled, wenn in Zeile 2 mariadb.service;enabled; auftaucht 
 ```
@@ -427,16 +596,147 @@ systemctl status mariadb
 ### Secure installation 
 
 ```
-mariadb-secure-installation 
+mariadb-secure-installation
+```
 ## OR: if not present before 10.4 
 mysql_secure_installation 
 ```
 
-<div class="page-break"></div>
+### Open Mariadb to the outside world - port and firewall
+
+
+### Step 1: Is services listening to the outside world (Ubuntu, Redhat, Rocky) ? 
+
+```
+lsof -i | grep mariadb
+## localhost means it does NOT listen to the outside now 
+## mariadbd  5208           mysql   19u  IPv4  56942      0t0  TCP localhost:mysql (LISTEN)
+
+netstat -tupel 
+## or 
+netstat -an 
+
+```
+
+### Step 2: is firewall open on port 3306 or service mysql (Rocky / RHEL) 
+
+```
+firewall-cmd --list-all
+## services: cockpit dhcpv6-client ssh
+firewall-cmd --add-service=mysql --zone=public
+firewall-cmd --runtime-to-permanent 
+
+```
+
+
+### How to fix (Ubuntu -> Mariadb Foundation) 
+
+```
+nano /etc/mysql/mariadb.conf.d/50-server.cnf
+```
+
+```
+## In Section [mysqld] 
+## Change bind-address to -> bind-address = 0.0.0.0
+[mysqld]
+bind-address = 0.0.0.0
+```
+
+```
+systemctl restart mariadb
+systemctl status mariadb
+lsof -i 
+```
+
+### Can I bind to multiple addresses  ?
+
+```
+## from 10.11 it is possible, before not, you have to use 0.0.0.0
+Starting with MariaDB 10.11, a comma-separated list of addresses to bind to can be given.
+```
+
+ * https://mariadb.com/kb/en/server-system-variables/#bind_address
 
 ## Konfiguration 
 
 ### Slow query log
+
+
+### Variante 1: Langsame Queries loggen
+
+#### Step 1: Config vorbereiten 
+
+```
+nano /etc/my.cnf.d/server.cnf
+```
+
+```
+## unterhalb von [mysqld]
+## guter richtwert 
+## long_query_time=0.5
+
+## nur fürs Training um Daten zu bekommen
+long_query_time=0.000001
+```
+
+```
+systemctl restart mariadb
+```
+
+#### Step 2: Während der Laufzeit global aktivieren 
+
+```
+mysql
+```
+
+```
+set global slow_query_log = 1;
+```
+
+```
+### Wichtig: Ist jetzt erst beim nächsten Connection mit einer Session für diese Session aktiv
+```
+
+#### Step 3: Zusätzliche sinnvolle Einstellungen vornehmen für das slow_query_log
+
+
+##### bis Version 10.4 (inkl.)
+
+```
+## Alle Logs analysieren, die kein Index verwendet 
+##/etc/mysql/mariadb.conf.d/50-server.cnf 
+## unter [mysqld]
+
+## slow query log 
+slow-query-log
+log-queries-not-using-indexes
+log-slow-rate-limit=5
+log-slow-verbosity = 'query_plan,explain'
+```
+##### ab Version 10.6. (auf Rocky / RHEL)
+
+```
+## Empfehlung in der config
+nano /etc/my.cnf.d/server.cnf
+```
+
+```
+## alle queries loggen die kein index haben
+log-queries-not-using-indexes
+## das nur für production, wenn wirklich dort getracked werden soll 
+## nur jede 20. mitloggen 
+log-slow-rate-limit=20
+## hier nimmt er alle optionen als Zusatzinformationen
+## auch neu (ab. 10.6: engine, Innodb
+log-slow-verbosity=All
+```
+
+```
+systemctl restart mariadb
+```
+
+
+
 
 
 ### Variante 1: Aktivieren (minimum) 
@@ -478,26 +778,12 @@ set session log_slow_verbosity = 'query_plan,explain'
 log-slow-rate-limit=5;
 ```
 
-### Best - Practice - Phase 1 
 
-```
-## Alle Logs analysieren, die kein Index verwendet 
-##/etc/mysql/mariadb.conf.d/50-server.cnf 
-## unter [mysqld]
-
-## slow query log 
-slow-query-log
-log-queries-not-using-indexes
-log-slow-rate-limit=5
-log-slow-verbosity = 'query_plan,explain'
-```
 
 
 ### Ref: 
 
  * https://mariadb.com/kb/en/slow-query-log-overview/
-
-<div class="page-break"></div>
 
 ## Administration 
 
@@ -517,8 +803,6 @@ wird, wird diese verwendet .
 mysql>show variables like 'default_storage_engine'
 
 ```
-
-<div class="page-break"></div>
 
 ### Show status
 
@@ -549,8 +833,6 @@ select * from information_schema.global_status;
 select * from information_schema.session_status;
 ```
 
-<div class="page-break"></div>
-
 ### Server System Variablen - show variables
 
 
@@ -567,8 +849,6 @@ select @@innodb_flush_method
 ```
 
 
-<div class="page-break"></div>
-
 ### systemctl/jorunalctl - Server starten,stoppen/Logs
 
 
@@ -583,8 +863,6 @@ systemctl restart  mariadb
 ```
 journalctl -u mariadb.service  # Zeigt alle Logs an seit dem letzten Serverstart (Debian 10)
 ```
-
-<div class="page-break"></div>
 
 ### User verwalten
 
@@ -611,7 +889,9 @@ mysql>select * from mysql.global_priv \G #  das geht nur im mysql-client und zei
 mysql>select * from mysql.user;
 ``` 
 
-<div class="page-break"></div>
+## Joins
+
+### Joins - Overview
 
 ## Performance und Optimierung von SQL-Statements 
 
@@ -643,8 +923,29 @@ explain partitions select * from actor
 ## Hier gibt es noch zusätzliche Informationen 
 explain format=json select * from actor 
 ```
+### Knoten im Taschentuch 
 
-<div class="page-break"></div>
+#### bei Extras 
+
+##### Using Index - Cover Index 
+
+```
+## z.B. select actor_id, last_name from actor;
+Using index - nur den Index verwendet und kein ansonsten holt 
+
+```
+
+##### Using Index Condition = Index Condition Pushdown (ICP) 
+
+```
+
+explain extended select first_name, actor_id  from actor where last_name like 'A%';
+```
+
+![image](https://github.com/user-attachments/assets/c9efa8ea-de10-4f3d-ac9e-825e92464129)
+
+ * https://mariadb.com/kb/en/index-condition-pushdown/
+
 
 ### Do not use '*' whenever possible
 
@@ -703,8 +1004,6 @@ PAGER set to 'grep 'rows in set''
 ### Ref:
 
   * https://www.oreilly.com/library/view/high-performance-mysql/9780596101718/ch04.html
-
-<div class="page-break"></div>
 
 ### Indexes
 
@@ -799,8 +1098,6 @@ explain select * from actor2 where last_name like 'B%';
 explain select * from actor2 where first_name like 'B%';
 ```
 
-<div class="page-break"></div>
-
 ### profiling-get-time-for-execution-of.query
 
  
@@ -845,8 +1142,6 @@ mysql> show profile for query 1;
 15 rows in set, 1 warning (0.00 sec)
 ```
 
-<div class="page-break"></div>
-
 ### Kein function in where verwenden
 
 
@@ -873,16 +1168,12 @@ select * from donors where upper(last_name) like 'Willia%'
 
 ```
 
-<div class="page-break"></div>
-
 ### Optimizer-hints (and why you should not use them)
 
 
 ### Tell the optimizer what to do and what not to do 
 
   * https://dev.mysql.com/doc/refman/5.7/en/optimizer-hints.html#optimizer-hints-syntax
-
-<div class="page-break"></div>
 
 ### Query-Plans aka Explains
 
@@ -975,8 +1266,6 @@ mysql> show warnings;
 
 
 
-<div class="page-break"></div>
-
 ### Query Pläne und die Key-Länge
 
 ### Index und Likes
@@ -1014,8 +1303,6 @@ select last_name,last_name_reversed from donor where last_name_reversed like rev
 ## Version 2 with pt-online-schema-change 
 
 ```
-
-<div class="page-break"></div>
 
 ### Index und Joins
 
@@ -1088,8 +1375,6 @@ id) where c.date_recieved > '1999-12-01' and c.date_recieved < '2000-07-01' and 
 
 ```
 
-<div class="page-break"></div>
-
 ### Find out cardinality without index
 
 
@@ -1107,8 +1392,6 @@ select count(distinct(vendor_city)) from contributions;
 +------------------------------+
 1 row in set (4.97 sec)
 ```
-
-<div class="page-break"></div>
 
 ### Index and Functions
 
@@ -1148,6 +1431,9 @@ mysql> explain select * from actor where last_name_upper like 'WI%' \G
 
 ```
 
+### Reference: 
+  * https://dev.mysql.com/doc/refman/5.6/en/innodb-online-ddl.html
+
 ### Now we try to search the very same 
 
 ```
@@ -1162,11 +1448,412 @@ explain select * from actor where last_name_upper like 'A%';
 ```
 
 
-<div class="page-break"></div>
+### index and group by
+
+
+![image](https://github.com/user-attachments/assets/e45c829f-8456-47bc-8f33-05cce6e05b88)
+
+
+![image](https://github.com/user-attachments/assets/0d03e530-7e2e-4bcb-8167-ae5600fe3287)
+
+```
+Variante 1:
+explain SELECT last_name, COUNT(*) AS 'count'
+  FROM actor
+  WHERE first_name LIKE 'S%'
+  GROUP BY last_name
+
+Variante 2:
+explain SELECT first_name, COUNT(*) AS 'count'
+  FROM actor
+  WHERE last_name LIKE 'S%'
+  GROUP BY first_name
+```
+
+### forcing good index
+
+
+### In Order By an index is often not used .
+
+  * https://mariadb.com/kb/en/index-hints-how-to-force-query-plans/#force-index-forcing-an-index
+
+### Use data from contributions 
+
+#### Walkthrough 
+
+```
+mysql contributions 
+```
+
+```
+## Set an index
+create index idx_contributions_date_recieved on contributions (date_recieved);
+```
+
+```
+## order by without index (decides to use table scan)
+explain select * from contributions order by date_recieved desc limit 100000;
+```
+
+![image](https://github.com/user-attachments/assets/f5947f26-d2be-4c68-9b80-8ef14933327e)
+
+```
+explain select * from contributions force index (idx_contributions_date_recieved) order by date_recieved desc limit 100000;
+```
+
+![image](https://github.com/user-attachments/assets/28d251b3-4268-441c-8409-32509a63ca71)
+
+```
+## how long does it take ? without index
+select * from contributions order by date_recieved desc limit 100000;
+```
+![image](https://github.com/user-attachments/assets/289b679c-280f-492c-9d19-ace3d4f20b85)
+
+```
+## Now forcing the index
+select * from contributions force index (idx_contributions_date_recieved) order by date_recieved desc limit 100000;
+```
+
+![image](https://github.com/user-attachments/assets/c2396575-e153-4415-84a6-11a37e782497)
+
+### forcing bad index
+
+
+   * Sometimes you force the wrong index
+   * You will have penalty on your time
+   * Here is an example
+
+### Using contributions 
+
+```
+## if not created in example before,please create
+create index if not exists idx_contributions_date_recieved on contributions (date_recieved); 
+```
+
+```
+## Do what the optimizer wants
+explain select * from contributions where contribution_id < 400000 and date_recieved < '2000-12-31';
+select * from contributions where contribution_id < 400000 and date_recieved < '2000-12-31';
+```
+
+![image](https://github.com/user-attachments/assets/804c1be1-52f5-454d-a5cb-c38b2bace278)
+
+
+
+```
+## Forcing the index, performance is worse
+explain select * from contributions force index (idx_contributions_date_recieved) where contribution_id < 400000 and date_recieved < '2000-12-31';
+select * from contributions force index (idx_contributions_date_recieved) where contribution_id < 400000 and date_recieved < '2000-12-31';
+```
+
+![image](https://github.com/user-attachments/assets/23b3f9de-0dd0-47d7-9364-815ddd2439d6)
+
+## Performance - Views
+
+### Performance - Views
+
+
+### General  
+   * SHOW CREATE VIEW
+   * Views can use 3 algorithms:
+     * merge 
+     * simple rewrites (translates the query)  
+   * temptable 
+     * Creates a temptable to retrieve information
+     * In this case no indexes can be used 
+     * Shows up explain with <derived>: 
+```
++----+-------------+------------+------+---------------+------+---------+------+------+-------+
+| id | select_type | table      | type | possible_keys | key  | key_len | ref  | rows | Extra |
++----+-------------+------------+------+---------------+------+---------+------+------+-------+
+|  1 | PRIMARY     | <derived2> | ALL  | NULL          | NULL | NULL    | NULL |   33 | NULL  |
+|  2 | DERIVED     | task       | ALL  | NULL          | NULL | NULL    | NULL |   33 | NULL  |
++----+-------------+------------+------+---------------+------+---------+------+------+-------+
+```
+   * undefined 
+     * MySQL chooses, if to use merge or temptable 
+     * prefers merge over temptable if possible  
+
+    
+
+### Handling (best practice)
+
+   * You can define the algorithm when creating the view 
+   * If you define merge and mysql cannot handle it
+     * you will get a warning 
+```
+mysql> CREATE ALGORITHM=MERGE VIEW priority_counts AS SELECT priority_id, COUNT(1) AS quanity FROM task GROUP BY priority_id;
+Query OK, 0 rows affected, 1 warning (0.12 sec)
+
+mysql> SHOW WARNINGS;
++---------+------+-------------------------------------------------------------------------------+
+| Level   | Code | Message                                                                       |
++---------+------+-------------------------------------------------------------------------------+
+| Warning | 1354 | View merge algorithm can't be used here for now (assumed undefined algorithm) |
++---------+------+-------------------------------------------------------------------------------+
+1 row in set (0.08 sec)
+```
+   * Ref: https://dba.stackexchange.com/questions/54481/determining-what-algorithm-mysql-view-is-using
+ 
+
+## Performance Schema
+
+### Performance Schema - slow queries
+
+
+### Shortcut (but activation to be done .. consumers / actors) 
+
+```
+select * from sys.statement_analysis 
+```
+
+### Step 1: Enable performance schema 
+
+```
+cd /etc/my.cnf.d
+nano server.cnf 
+```
+
+```
+[mysqld]
+performance_schema=on 
+```
+
+```
+##
+systemctl restart mariadb
+```
+
+```
+mysql -e 'select @@performance_schema' 
+```
+
+### Step 2: Activate specific settings to enable it 
+
+```
+## Instrumente aktivieren
+update performance_schema.setup_instruments set enabled = 'yes', timed = 'yes';
+
+## consumers aktiviert
+## performance_schema.setup_consumers
+```
+![image](https://github.com/user-attachments/assets/cca55ed0-738f-45f3-8c99-8d3687eb7ec4)
+
+
+```
+-- Query ausgeführt:
+use contributions; select * from contributions where contribution_id < 400000 and date_recieved < '2000-12-31';';
+```
+
+```
+## uns in digest angeschaut
+use performance_schema;
+select * from events_statements_summary_by_digest \G   
+## Die Laufzeit LAST_SEEN - FIRST_SEEN (Laúfzeit der Query)
+## Danach könnten man sortieren  
+
+
+```
+
+### Referenz:
+
+  * https://fromdual.com/mariadb-and-mysql-performance-schema-hints#top-long-running-queries
+
+## Performance Metrics from status
+
+### Performance Metrics from status
+
+
+```
+## Description: Number of joins which used a full scan of the first table.
+## ->
+Select_scan 
+
+## No index at all 
+Select_full_join
+
+## Using index scan - 2nd worst
+Select_full_range_join
+
+##
+Select_range_check
+```
+
+## Locks
+
+### How does innodb implicit locking work
+
+
+### How do the work in general 
+
+  * Implicit locks are done by InnoDB itself 
+  * We can only partly influence them. 
+  
+### Who wants what ? 
+
+```
+<who?, what?, how?, granted?>
+```
+
+### Explanation (a bit clumsy) 
+
+  * IS and IX (intended share an intended write lock) 
+  * IS and IX can be trigged on SQL
+  * IX -> SUFFIX -> FOR UPDATE (this triggers a IX lock) 
+  * IX and IS are the first step (on table layer) 
+  * After that IX -> tries to get an write lock on row-level -> X 
+  * Works unless there is another X 
+  * IX and IS is not retrieved on TABLE spaced operations (construction --- alter) 
+
+### Lock Type compability matrix 
+
+```
+    X           IX          S           IS
+X   Conflict    Conflict    Conflict    Conflict
+IX  Conflict    Compatible  Conflict    Compatible
+S   Conflict    Conflict    Compatible  Compatible
+IS  Conflict    Compatible  Compatible  Compatible
+```
+
+
+### The best explanation across the internet ;o) 
+
+  * http://stackoverflow.com/questions/25903764/why-is-an-ix-lock-compatible-with-another-ix-lock-in-innodb|IX_and_IS-locks
+
+```
+Many people, both visitors and curators, enter the museum. 
+The visitors want to view paintings, so they wear a badge labeled "IS". 
+The curators may replace paintings, so they wear a badge labeled "IX". 
+There can be many people in the museum at the same time, with both types of badges. 
+They don't block each other.
+
+During their visit, the serious art fans will get as close to the painting as they can, 
+and study it for lengthy periods. 
+
+They're happy to let other art fans stand next to them before the same painting. 
+They therefore are doing SELECT ... LOCK IN SHARE MODE and they have "S" lock, 
+because they at least don't want the painting to be replaced while they're studying it.
+
+The curators can replace a painting, but they are courteous to the serious art fans, 
+and they'll wait until these viewers are done and move on. 
+So they are trying to do SELECT ... FOR UPDATE (or else simply UPDATE or DELETE). 
+They will acquire "X" locks at this time, by hanging a little sign up saying "exhibit being redesigned." 
+The serious art fans want to see the art presented in a proper manner, with nice lighting and some descriptive placque. 
+They'll wait for the redesign to be done before they approach (they get a lock wait if they try).
+```
+
+### Exercise - identify deadlocks
+
+
+### Prerequisite 
+
+```
+2 sessions (connected to same server):
+Session 1
+Session 2 
+
+sakila database is installed 
+
+```
+
+### Session 1:
+
+```
+## Start transaction and lock row by updating it 
+mysql>use sakila;
+mysql>begin;
+mysql>update actor set last_name='Johnsson' where actor_id = 200;
+
+## Attention: not commit yet please, leave transaction open 
+
+```
+
+### Session 2:
+
+```
+## Start transactio and try to update same row 
+mysql>use sakila;
+mysql>begin;
+mysql>update actor set last_name='John' where actor_id = 200;
+
+## Now update cannot be done, because of lock from session one 
+
+```
+
+### Session 1: / or new Session 3 
+
+```
+## find out who blocks session 2 
+mysql>use information_schema;
+## find out trx_id of session 2 
+mysql>select * from innodb_trx;
+## assuming we have trx_id 1468; 
+## now we find out what is blocking this transaction
+mysql>select * from innodb_lock_waits; 
+MariaDB [information_schema]> select * from innodb_lock_waits;
++-------------------+-------------------+-----------------+------------------+
+| requesting_trx_id | requested_lock_id | blocking_trx_id | blocking_lock_id |
++-------------------+-------------------+-----------------+------------------+
+| 1469              | 1469:66:3:201     | 1468            | 1468:66:3:201    |
++-------------------+-------------------+-----------------+------------------+
+1 row in set (0.001 sec)
+
+## either additional infos 
+select * from innodb_trx where trx_id = 1468;
+
+## get thread_id -> e.g. 50
+
+## or directly kill this transaction 
+show processlist;
+kill 50;
+
+```
+
+### Easier way to find locks with sys - database 
+
+```
+## \G nur in mysql/mariadbclient 
+select * from sys.innodb_lock_waits \G
+```
+
+
+### With this command you can also see pending locks 
+
+```
+show engine innodb status \G
+```
+
+
+### There is more (activate: do not only show last deadlock)
+
+```
+## by setting this, deadlocks are written to error log 
+set global innodb_print_all_deadlocks = ON
+```
+
+
+### Refs:
+
+  * https://fromdual.com/mariadb-deadlocks
+
+### Refs ( 3 important tables )  
+
+  * https://mariadb.com/kb/en/information-schema-innodb_lock_waits-table/ (most important one) 
+  * https://mariadb.com/kb/en/information-schema-innodb_locks-table/
+  * https://mariadb.com/kb/en/information-schema-innodb_trx-table/
 
 ## Tools 
 
 ### Percona Toolkit
+
+
+### Walkthrough Rocky 9 / RHEL 9 
+
+```
+wget https://downloads.percona.com/downloads/percona-toolkit/3.7.0/binary/redhat/9/x86_64/percona-toolkit-3.7.0-1.el9.x86_64.rpm
+
+dnf localinstall percona-toolkit-3.7.0-1.el9.x86_64.rpm
+```
 
 
 ### Walkthrough (Ubuntu 20.04) 
@@ -1200,8 +1887,6 @@ apt install -y percona-toolkit
 sudo apt update; sudo apt install -y wget gnupg2 lsb-release curl; cd /usr/src; wget https://repo.percona.com/apt/percona-release_latest.generic_all.deb; dpkg -i percona-release_latest.generic_all.deb; apt update; apt install -y percona-toolkit 
 ```
 
-<div class="page-break"></div>
-
 ### pt-query-digest - analyze slow logs
 
 
@@ -1209,7 +1894,7 @@ sudo apt update; sudo apt install -y wget gnupg2 lsb-release curl; cd /usr/src; 
 
   * Install percona-toolkit 
   
-### Usage 
+### Prepare: Activate slow quer log 
 
 ```
 ## first enable slow_query_log 
@@ -1221,16 +1906,20 @@ set session long_query_time = 0.2
 ## produce slow query - for testing 
 select * from contributions where vendor_last_name like 'W%';
 mysql > quit 
+```
 
-## 
-cd /var/lib/mysql 
-## look for awhile wih -slow.log - suffix 
-pt-query-digest mysql-slow.log > /usr/src/report-slow.txt
-less report-slow.txt 
+
+### Analyze: slow_query_log 
 
 ```
 
-<div class="page-break"></div>
+cd /var/lib/mysql 
+## look for awhile wih -slow.log - suffix 
+pt-query-digest mysql-slow.log > /usr/src/report-slow.txt
+cd /usr/src 
+less report-slow.txt 
+
+```
 
 ### pt-online-schema-change howto
 
@@ -1262,8 +1951,6 @@ pt-online-schema-change --alter "ADD INDEX idx_city (city)" --execute D=contribu
  pt-online-schema-change --alter "add column remark varchar(150)" D=sakila,t=actor --alter-foreign-keys-method=auto --execute 
 
 ```
-
-<div class="page-break"></div>
 
 ### Example sys-schema and Reference
 
@@ -1305,8 +1992,6 @@ total_memory_allocated: 0 bytes
   
   
 
-<div class="page-break"></div>
-
 ## Beispieldaten
 
 ### Verleihdatenbank - sakila
@@ -1322,8 +2007,6 @@ mysql < sakila-schema.sql
 mysql < sakila-data.sql 
 
 ```
-
-<div class="page-break"></div>
 
 ### Setup training data "contributions"
 
@@ -1341,10 +2024,24 @@ cd mysql_example;
 ## Eventually you need to enter (in mysql_example/mysql.cnf)  
 ## Only necessary if you cannot connect to db by entering "mysql" 
 ## password=<your_root_pw> 
-./setup.sh 
+./setup-debian.sh 
 ```
 
-<div class="page-break"></div>
+### Walkthrough (Redhat/Rocky) 
+
+```bash 
+cd /usr/src;
+dnf install -y git 
+git clone https://github.com/jmetzger/dedupe-examples.git;
+cd dedupe-examples; 
+cd mysql_example; 
+## Eventually you need to enter (in mysql_example/mysql.cnf)  
+## Only necessary if you cannot connect to db by entering "mysql" 
+## password=<your_root_pw> 
+./setup-rhel.sh 
+```
+
+
 
 ## Managing big tables 
 
@@ -1405,8 +2102,6 @@ Daten ohne Struktur einspielen
 ### Ref:
 
   * https://mariadb.com/kb/en/partition-maintenance/
-
-<div class="page-break"></div>
 
 ## Replication
 
@@ -1487,8 +2182,6 @@ No, this is not possible
   ```
 
 
-<div class="page-break"></div>
-
 ## Projektarbeit/-optimierung 
 
 ### Praktisch Umsetzung in 3-Schritten
@@ -1523,9 +2216,7 @@ No, this is not possible
 
   1. Falls es keine andere Lösung gibt, könnte u.U. Partitionierung helfen. [Hier](#using-partitions---walkthrough)
 
-<div class="page-break"></div>
-
-## Dokumentation 
+## Dokumentation (Performance) 
 
 ### MySQL - Performance - PDF
 
@@ -1534,3 +2225,156 @@ No, this is not possible
 ### Effective MySQL
 
   * https://www.amazon.com/Effective-MySQL-Optimizing-Statements-Oracle/dp/0071782796
+
+### Analyze statt Explain
+
+  * https://mariadb.com/kb/en/analyze-statement/
+
+## Dokumentation (Releases)
+
+### Identify Long-Term Support Releases
+
+  * https://mariadb.com/kb/en/mariadb-server-release-dates/
+
+## Dokumentation (Server System Variables / Alter inplace)
+
+### Server System Variables
+
+  * https://mariadb.com/kb/en/server-system-variables/
+
+### Inplace Alter
+
+  * https://mariadb.com/kb/en/innodb-online-ddl-operations-with-the-inplace-alter-algorithm/
+
+## Dokumentation (Indexes)
+
+## Dokumenation (Virtual Columns / Persistentn)
+
+### Persistent / Virtual Columns
+
+  * https://mariadb.com/kb/en/generated-columns/
+
+## Backup/Restore
+
+### Mariabackup
+
+
+### Installation 
+
+#### dnf (using mariadb from mariadb.org - repo)
+```
+dnf install MariaDB-backup 
+```
+
+#### Installation von Distri (Centos/Rocky/RHEL)
+
+```
+## Rocky 8 
+dnf install mariadb-backup 
+```
+
+#### Installation deb (Ubuntu/Debian) 
+
+```
+apt search mariadb-backup 
+apt install -y mariadb-backup 
+```
+
+### Walkthrough (Ubuntu/Debian)
+
+#### Schritt 1: Grundkonfiguration 
+
+```
+## user eintrag in /root/.my.cnf
+[mariabackup]
+user=root 
+## pass is not needed here, because we have the user root with unix_socket - auth 
+## or generic 
+## /etc/mysql/mariadb.conf.d/mariabackup.cnf
+[mariabackup]
+user=root
+```
+
+#### Schritt 2: Backup erstellen 
+
+```
+mkdir /backups 
+## target-dir needs to be empty or not present 
+mariabackup --target-dir=/backups/2023091901 --backup 
+```
+
+#### Schritt 3: Prepare durchführen 
+
+```
+## apply ib_logfile0 to tablespaces 
+## after that ib_logfile0 ->  0 bytes
+mariabackup --target-dir=/backups/2023091901 --prepare 
+```
+
+#### Schritt 4: Recover 
+
+```
+systemctl stop mariadb 
+mv /var/lib/mysql /var/lib/mysql.bkup 
+mariabackup --target-dir=/backups/2023091901 --copy-back 
+chown -R mysql:mysql /var/lib/mysql
+chmod -R 755 /var/lib/mysql # otherwice socket for unprivileged user does not work
+systemctl start mariadb
+systemctl status mariadb 
+```
+
+### Walkthrough (Redhat/Centos/Rocky Linux)
+
+#### Schritt 1: Grundkonfiguration 
+
+```
+## user eintrag in /root/.my.cnf
+[mariabackup]
+user=root 
+## pass is not needed here, because we have the user root with unix_socket - auth 
+## or generic 
+## /etc/my.cnf.d/mariabackup.cnf
+[mariabackup]
+user=root
+```
+
+### Schritt 2: Backup erstellen 
+
+```
+mkdir /backups 
+## target-dir needs to be empty or not present 
+mariabackup --target-dir=/backups/2023091901 --backup 
+```
+
+### Schritt 3: Prepare durchführen 
+
+```
+## apply ib_logfile0 to tablespaces 
+## after that ib_logfile0 ->  0 bytes
+mariabackup --target-dir=/backups/2023091901 --prepare 
+```
+
+### Schritt 4: Recover
+
+```
+systemctl stop mariadb 
+mv /var/lib/mysql /var/lib/mysql.bkup 
+mariabackup --target-dir=/backups/2023091901 --copy-back 
+chown -R mysql:mysql /var/lib/mysql
+chmod -R 755 /var/lib/mysql # otherwice socket for unprivileged user does not work
+## Does not work !!! Because of selinux // does not start
+## ls -laZ /var/lib
+systemctl start mariadb 
+
+### important for selinux if it does not work
+### mariadb 10.6 from mariadb does not have problems here !
+### does not start
+restorecon -vr /var/lib/mysql 
+systemctl start mariadb
+
+### Cleanup if everything works 
+rm -fR /var/lib/mysql/mysql.bkup 
+```
+
+### Ref. 
+https://mariadb.com/kb/en/full-backup-and-restore-with-mariabackup/
