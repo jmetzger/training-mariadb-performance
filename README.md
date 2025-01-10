@@ -43,7 +43,7 @@
   1. Performance Schema
      * [Performance Schema - slow queries](performance_schema/find-slow-queries.md)
   1. Performance Metrics from status
-     * [Performance Metrics from statzs}(status/performance-metrics.md)
+     * [Performance Metrics from status](status/performance-metrics.md)
   1. Tools 
      * [Percona Toolkit](/tools/percona-toolkit.md) 
      * [pt-query-digest - analyze slow logs](/tools/pt-query-digest.md)
