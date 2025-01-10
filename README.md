@@ -63,7 +63,8 @@
   1. Dokumentation (Server System Variables / Alter inplace)
      * [Server System Variables](https://mariadb.com/kb/en/server-system-variables/)
      * [Inplace Alter](https://mariadb.com/kb/en/innodb-online-ddl-operations-with-the-inplace-alter-algorithm/)
-      
+  1. Dokumentation (Indexes)
+    * [Recipes for settings indexes](https://mariadb.com/kb/en/building-the-best-index-for-a-given-select/)
   1. Backup/Restore
      * [Mariabackup](backup-restore/mariabackup.md)
         
