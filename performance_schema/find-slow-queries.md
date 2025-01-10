@@ -1,5 +1,11 @@
 # Find slow queries 
 
+## Shortcut (but activation to be done .. consumers / actors) 
+
+```
+select * from sys.statement_analysis 
+```
+
 ## Step 1: Enable performance schema 
 
 ```
