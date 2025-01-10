@@ -44,6 +44,9 @@
      * [Performance Schema - slow queries](performance_schema/find-slow-queries.md)
   1. Performance Metrics from status
      * [Performance Metrics from status](status/performance-metrics.md)
+  1. Locks
+     * [How does innodb implicit locking work](locks/innodb-implicit-locks.md)
+     * [Exercise - identify deadlocks](locks/deadlocks.md)  
   1. Tools 
      * [Percona Toolkit](/tools/percona-toolkit.md) 
      * [pt-query-digest - analyze slow logs](/tools/pt-query-digest.md)
