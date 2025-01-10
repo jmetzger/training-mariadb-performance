@@ -44,7 +44,7 @@ mysql>use information_schema;
 mysql>select * from innodb_trx;
 # assuming we have trx_id 1468; 
 # now we find out what is blocking this transaction
-mysql>select * from innodb_locks_waits; 
+mysql>select * from innodb_lock_waits; 
 MariaDB [information_schema]> select * from innodb_lock_waits;
 +-------------------+-------------------+-----------------+------------------+
 | requesting_trx_id | requested_lock_id | blocking_trx_id | blocking_lock_id |
@@ -63,6 +63,14 @@ show processlist;
 kill 50;
 
 ```
+
+## Easier way to find locks with sys - database 
+
+```
+# \G nur in mysql/mariadbclient 
+select * from sys.innodb_lock_waits \G
+```
+
 
 ## With this command you can also see pending locks 
 
