@@ -7,7 +7,8 @@
 
 ==== MySQL (Inner) Join ==== 
 
-{{:img_innerjoin.gif?nolink&200|}}
+![image](https://github.com/user-attachments/assets/b0c54d02-95b6-4593-bd5d-d290d42a5729)
+
 
 ==== MySQL (Inner) Join (explained) ====
 
@@ -20,7 +21,8 @@
 
 ```
 
-{{:img_leftjoin.gif?nolink&200|}}
+![image](https://github.com/user-attachments/assets/c486eb59-bf64-44e7-abce-7ac1c4e18731)
+
 
 ```
 ==== MySQL Left (outer) Join (explained) ==== 
@@ -34,7 +36,8 @@
 ==== MySQL Right Join ==== 
 ```
 
-{{:img_rightjoin.gif?nolink&200|}}
+![image](https://github.com/user-attachments/assets/69935a67-78fb-44d2-86ea-cdefe3060734)
+
 
 ```
 ==== MySQL Right Join (explained) ==== 
@@ -186,12 +189,13 @@ for each row in t1 matching range {
   * Can be seen in explain 
 ```
 
+![image](https://github.com/user-attachments/assets/06380456-a4e2-4213-9b71-b2621bfdb91c)
 
-  * {{:proof-nested-loop.png?nolink&1000|}}
+  
 ```
   
   * explain select * from t1, t2 where t1.col < 10 and t2.col < 'bar';
 
 ```
 
-```
+
