@@ -8,7 +8,7 @@
 
 ```
 # if not created in example before,please create
-create index idx_contributions_date_recieved on contributions (date_recieved); 
+create index if not exists idx_contributions_date_recieved on contributions (date_recieved); 
 ```
 
 ```
