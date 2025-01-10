@@ -67,6 +67,7 @@
   1. Dokumentation (Performance) 
      * [MySQL - Performance - PDF](http://schulung.t3isp.de/documents/pdfs/mysql/mysql-performance.pdf)
      * [Effective MySQL](https://www.amazon.com/Effective-MySQL-Optimizing-Statements-Oracle/dp/0071782796)
+     * [Analyze statt Explain](https://mariadb.com/kb/en/analyze-statement/)
   1. Dokumentation (Releases)
      * [Identify Long-Term Support Releases](https://mariadb.com/kb/en/mariadb-server-release-dates/)  
   1. Dokumentation (Server System Variables / Alter inplace)
