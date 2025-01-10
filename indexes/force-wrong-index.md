@@ -7,8 +7,8 @@
 ## Using contributions 
 
 ```
-# index was created on example before 
-
+# if not created in example before,please create
+create index idx_contributions_date_recieved on contributions (date_recieved); 
 ```
 
 ```
