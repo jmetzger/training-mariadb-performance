@@ -41,7 +41,9 @@
      * [forcing good index](/indexes/force-index.md)
      * [forcing bad index](indexes/force-wrong-index.md)
   1. Performance Schema
-     * [Performance Schema - slow queries](performance_schema/find-slow-queries.md)  
+     * [Performance Schema - slow queries](performance_schema/find-slow-queries.md)
+  1. Performance Metrics from status
+     * [Performance Metrics from statzs}(status/performance-metrics.md)
   1. Tools 
      * [Percona Toolkit](/tools/percona-toolkit.md) 
      * [pt-query-digest - analyze slow logs](/tools/pt-query-digest.md)
