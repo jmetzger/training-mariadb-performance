@@ -74,6 +74,8 @@
      * [Inplace Alter](https://mariadb.com/kb/en/innodb-online-ddl-operations-with-the-inplace-alter-algorithm/)
   1. Dokumentation (Indexes)
     * [Recipes for settings indexes](https://mariadb.com/kb/en/building-the-best-index-for-a-given-select/)
+  1. Dokumenation (Virtual Columns / Persistentn)
+     * [Persistent / Virtual Columns](https://mariadb.com/kb/en/generated-columns/)
   1. Backup/Restore
      * [Mariabackup](backup-restore/mariabackup.md)
         
