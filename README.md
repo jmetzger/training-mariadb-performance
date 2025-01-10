@@ -36,7 +36,8 @@
      * [Index und Likes](indexes/like-index-not-index.md)
      * [Index und Joins](indexes/join-index.md)
      * [Find out cardinality without index](/indexes/cardinality.md)
-     * [Index and Functions](index-and-functions.md) 
+     * [Index and Functions](index-and-functions.md)
+     * [index and group by](indexes/groupby.md)
   1. Tools 
      * [Percona Toolkit](/tools/percona-toolkit.md) 
      * [pt-query-digest - analyze slow logs](/tools/pt-query-digest.md)
