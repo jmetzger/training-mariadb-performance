@@ -5,29 +5,35 @@
  * combines rows from two or more tables
  * based on a related column between them.
 
-==== MySQL (Inner) Join ==== 
+
 ```
+
+## MariaDB (Inner) Join 
+
 
 ![image](https://github.com/user-attachments/assets/b0c54d02-95b6-4593-bd5d-d290d42a5729)
 
-```
-==== MySQL (Inner) Join (explained) ====
 
+## MariaDB (Inner) Join (explained) ====
+
+```
   * Inner Join and Join are the same
   * Returns records that have matching values in both tables
   * Inner Join, Cross Join and Join 
     * are the same in MySQL
- 
-==== MySQL Left Join ====
+ ```
 
-```
+ 
+ ## MariaDB Left Join
 
 ![image](https://github.com/user-attachments/assets/c486eb59-bf64-44e7-abce-7ac1c4e18731)
 
 
-```
-==== MySQL Left (outer) Join (explained) ==== 
 
+## MySQL Left (outer) Join (explained) ==== 
+
+
+```
   * Return all records from the left table
   * _AND_ the matched records from the right table
   * The result is NULL on the right side
