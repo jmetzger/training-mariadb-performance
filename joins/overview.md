@@ -14,7 +14,7 @@
 ![image](https://github.com/user-attachments/assets/b0c54d02-95b6-4593-bd5d-d290d42a5729)
 
 
-## MariaDB (Inner) Join (explained) ====
+## MariaDB (Inner) Join (explained) 
 
 ```
   * Inner Join and Join are the same
