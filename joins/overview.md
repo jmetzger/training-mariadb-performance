@@ -24,7 +24,7 @@
  ```
 
  
- ## MariaDB Left Join
+## MariaDB Left Join
 
 ![image](https://github.com/user-attachments/assets/c486eb59-bf64-44e7-abce-7ac1c4e18731)
 
@@ -32,16 +32,11 @@
 
 ## MySQL Left (outer) Join (explained) ==== 
 
-
-```
   * Return all records from the left table
   * _AND_ the matched records from the right table
   * The result is NULL on the right side
     * if there are no matched columns on the right 
   * Left Join and Left Outer Join are the same
-
-
-```
 
 ## MySQL Right Join
 
@@ -105,7 +100,6 @@ and film_actor.film_id = film.film_id;
   * Return all rows from the left side
     * even if there is not result on the right side
   * Example
-```
 
 ```
 SELECT 
